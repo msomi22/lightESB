@@ -8,7 +8,7 @@ We need to expose a REST/XML service, this services will receive a custome paylo
 
 Our ESB will be structured into two logical parts, business and technical.
 
-The business logical part will do validation, authentication and authorization. In the database one will configure the three.
+The business logical part will do validation, authentication and authorization. The three will be configured in the database.
 
 For example, 
 
@@ -36,7 +36,7 @@ This ESB will be driven by congigurable templates, infact, every part will be co
 
 When there is a need for integration, no kind of development will be required.
 
-That said, the design of the application must be smart so that in future we don't have to find a need for code change due to some unforeseen requirements.
+That said, the design of the application must be smart so that in future we don't have to find a need for code change due to some unforeseen requirements, redis for isntance.
 
 So, our slogan is.
 

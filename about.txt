@@ -37,7 +37,7 @@ This ESB will be driven by congigurable templates, infact, every part will be co
 
 When there is a need for integration, no form of development will be required.
 
-That said, the design of the application must be smart so that in future we don't have to find a need for code change, mostly due to some unforeseen requirements.
+That said, the design of the application must be smart so that in future, there will be no need to change the code, mostly due to some unforeseen requirements.
 
 The ESB will depend much on redis mem db for configurations.
 

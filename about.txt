@@ -54,10 +54,89 @@ Sample Requirement.
 
 1. *Caller request*
 
+<request>
+    <header>
+        <systemCode>100</systemCode>
+        <timestamp>time_here</timestamp>
+        <service>001</service>
+    </header>
+    <body>
+        <reference>unique_id</reference>
+        <customerName>Peter Mwenda</customerName>
+        <customerMobile>0718953974</customerMobile>
+        <accounts>
+            <account>
+                <id>1</id>
+                <name>peter</name>
+                <mobile>0718953974</mobile>
+                <email>mwendapeter72@gmail.com</email>
+                <balance>100</balance>
+            </account>
+             <account>
+                <id>2</id>
+                <name>peter</name>
+                <mobile>0718953974</mobile>
+                <email>mwendapeter72@gmail.com</email>
+                <balance>100</balance>
+            </account>
+             <account>
+                <id>3</id>
+                <name>peter</name>
+                <mobile>0718953974</mobile>
+                <email>mwendapeter72@gmail.com</email>
+                <balance>100</balance>
+            </account>
+        </accounts>
+    </body>
+</request>
+
 2. *Acknowledgement template*
+
+<response>
+    <header>
+        <systemCode>100</systemCode>
+        <timestamp>time_here</timestamp>
+        <service>001</service>
+    </header>
+    <body>
+        <reference>unique_id</reference>
+        <satus>01</satus>
+        <statusDesc>sucess</statusDesc>
+    </body>
+</response>
 
 3. *Delimited template*
 
+REQUEST:REF={reference},NAME={customerName},MOBILE={customerMobile},ACCOUNTS={account}
+account->accounts:account=account^[ACCOUNT_NO={id},ACCOUNT_TITLE={name},ACCOUNT_MOBILE={mobile},ACCOUNT_EMAIL={email},ACCOUNT_BALANCE={balance}]
+
 4. *Final response template*
   
+  
+  
+{
+	"statusCode": "01",
+	"statusDesc": "success",
+	"response": [{
+			"ResponseString": "REQUEST:REF=unique_id,NAME=Peter Mwenda,MOBILE=0718953974,ACCOUNTS=account=ACCOUNT_NO=1,ACCOUNT_TITLE=peter,ACCOUNT_MOBILE=0718953974,ACCOUNT_EMAIL=mwendapeter72@gmail.com,ACCOUNT_BALANCE=100^account=ACCOUNT_NO=2,ACCOUNT_TITLE=peter,ACCOUNT_MOBILE=0718953974,ACCOUNT_EMAIL=mwendapeter72@gmail.com,ACCOUNT_BALANCE=100^account=ACCOUNT_NO=3,ACCOUNT_TITLE=peter,ACCOUNT_MOBILE=0718953974,ACCOUNT_EMAIL=mwendapeter72@gmail.com,ACCOUNT_BALANCE=100",
+			"status": "sucess"
+		}
+
+	]
+}
+  
+  
+  
+  
+  
+
+XML lint tool
+
+https://www.webtoolkitonline.com/xml-formatter.html
+
+JSON lint tool
+
+https://jsonlint.com
+
+
 

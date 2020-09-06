@@ -124,14 +124,14 @@ Sample Requirement.
 </response>
 
 
-3. *Delimited template*
+4. *Delimited template*
 
 
 template ==> REQUEST:REF={reference},NAME={customerName},MOBILE={customerMobile},ACCOUNTS=*{accountT}
 accountT ==> accounts:account=account[ACCOUNT_NO={id},ACCOUNT_TITLE={name},ACCOUNT_MOBILE={mobile},ACCOUNT_EMAIL={email},ACCOUNT_BALANCE={balance}]
 
 
-4. *Final response template*
+5. *Final response template*
   
   
   
@@ -147,7 +147,7 @@ accountT ==> accounts:account=account[ACCOUNT_NO={id},ACCOUNT_TITLE={name},ACCOU
 }
 
 
-5. *Final response*
+6. *Final response*
 
 
 {

@@ -5,10 +5,11 @@ package demo;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.util.*;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.*;
+import javax.xml.xpath.*;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringSubstitutor;
@@ -16,12 +17,16 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
 
 /**
  * 
  *
  */
 public class DemoApp {
+
+	static String transformAttributes = "";
+	// ADD_INDEX_AFTER,ADD_INDEX_BEFORE,ADD_INDEX_START,INDEX_BETWEEN
 
 	/**
 	 * 
@@ -35,25 +40,71 @@ public class DemoApp {
 	 */
 	public static void main(String[] args) {
 
-		System.out.println(transformXML().toString());
+		// TODO
+		Map<String, String> transformationMap = new HashMap<>();
+		transformationMap.put("reference", extractXpath(callerRequest, "//reference"));
+		transformationMap.put("customerName", extractXpath(callerRequest, "//customerName"));
+		transformationMap.put("customerMobile", extractXpath(callerRequest, "//customerMobile"));
+		transformationMap.put("systemCode", extractXpath(callerRequest, "//systemCode"));
+		transformationMap.put("service", extractXpath(callerRequest, "//service"));
+
+		String output = "STR";
+		String outType = "MAP_LIST";
+		String[] targetTags = { "id", "name", "mobile", "email", "balance" };
+
+		Object out = transformXML(output, callerRequest, strTemplate, childTemplate3, outType, targetTags,
+				transformationMap);
+		System.out.println(out.toString());
 
 	}
 
-	public static Object transformXML() {
+	/**
+	 * 
+	 * @param outMessage
+	 * @param callerRequest
+	 * @param strTemplate
+	 * @param childTemplate
+	 * @param outType
+	 * @param targetTags
+	 * @param transformationMap
+	 * @return
+	 */
+	public static Object transformXML(String outMessage, String callerRequest, String strTemplate, String childTemplate,
+			String outType, String[] targetTags, Map<String, String> transformationMap) {
 
-		String filtered = "";
-		if (strTemplate.contains("*")) {
-			String outType = "MAP_LIST";
-			String[] targetTags = { "id", "name", "mobile", "email", "balance" };
-			strTemplate = StringUtils.replace(strTemplate, "*", ""); 
-			filtered = getChildRecord(callerRequest, childTemplate, outType, targetTags);
+		Object outputMessage = "";
+		switch (outMessage) {
+		case "STR":
+
+			outputMessage = toSTR(callerRequest, strTemplate, childTemplate, outType, targetTags, transformationMap);
+			break;
+
+		default:
+			break;
 		}
 
-		Map<String, String> map = new HashMap<>();
-		map.put("childTemplate", filtered);
-		extractXpath(callerRequest, "//");
+		return outputMessage;
+	}
 
-		String output = replaceTemplate(strTemplate, map);
+	/**
+	 * 
+	 * @param callerRequest
+	 * @param strTemplate
+	 * @param childTemplate
+	 * @param outType
+	 * @param targetTags
+	 * @param transformationMap
+	 * @return
+	 */
+	private static Object toSTR(String callerRequest, String strTemplate, String childTemplate, String outType,
+			String[] targetTags, Map<String, String> transformationMap) {
+		String filtered = "";
+		if (strTemplate.contains("*")) {
+			strTemplate = StringUtils.replace(strTemplate, "*", "");
+			filtered = getChildRecord(callerRequest, childTemplate, outType, targetTags);
+		}
+		transformationMap.put("childTemplate", filtered);
+		String output = replaceTemplate(strTemplate, transformationMap);
 
 		return output;
 	}
@@ -70,8 +121,9 @@ public class DemoApp {
 			String[] targetTags) {
 		String targetTag = StringUtils.substringBetween(childTemplate, "=", "[");
 		targetTag = StringUtils.substringAfter(targetTag, "=");
+		String wrapper = StringUtils.substringBefore(childTemplate, "=");
 		Object outputMap = extractList(callerRequest, targetTag, targetTags, outType);
-		String filtered = mapListFilter(outputMap, targetTags, childTemplate);
+		String filtered = mapListFilter(outputMap, targetTags, childTemplate, wrapper);
 		return filtered;
 	}
 
@@ -82,28 +134,51 @@ public class DemoApp {
 	 * @param template
 	 * @return
 	 */
-	private static String mapListFilter(Object outputMap, String[] targetTags, String template) {
+	private static String mapListFilter(Object outputMap, String[] targetTags, String template, String wrapper) {
 		String delim = "";
 		delim = StringUtils.substringBetween(template, "=", "=");
 		template = StringUtils.substringBetween(template, "[", "]");
-
+		// wrapper = "accountObj";
 		String records = "";
+
 		if (outputMap instanceof List) {
 			List<Map> mapList = (List<Map>) outputMap;
-			for (Map map : mapList) {
+			int count = 1;
+			for (Map<?, ?> map : mapList) {
 				String record = "";
 				for (int i = 0; i < targetTags.length; i++) {
-					String tag = targetTags[i];
-					String value = map.getOrDefault(tag, "").toString();
 					record = replaceTemplate(template, map);
-
 				}
-				records += delim + "" + record;
+
+				if (!transformAttributes.isEmpty()) {
+					record = transformOutput(count, record, transformAttributes);
+				}
+
+				switch (delim) {
+				case "XML":
+					records += "<" + wrapper + ">" + record + "</" + wrapper + ">";
+					break;
+				case "JSON":
+					if (count < mapList.size()) {
+						records += record + ",";
+					} else {
+						records += record;
+					}
+					break;
+				default:
+					records += delim + "" + record;
+					break;
+				}
+				count++;
 			}
+		}
+		if (delim.equals("JSON")) {
+			records = "{\""+wrapper+"\":[" + records + "]}";
 		}
 		if (records.startsWith(delim)) {
 			records = StringUtils.stripStart(records, delim);
 		}
+
 		return records;
 	}
 
@@ -111,13 +186,66 @@ public class DemoApp {
 	 * 
 	 * @param template
 	 * @param map
+	 * @param transformAttributes
+	 * @param index
 	 * @return
 	 */
 	private static String replaceTemplate(String template, Map map) {
-		String record;
+		String record = "";
 		StringSubstitutor sub = new StringSubstitutor(map);
 		record = sub.replace(template);
 		return record;
+	}
+
+	private static String transformOutput(int count, String output, String transformAttributes) {
+		if (transformAttributes.contains(",")) {
+			String[] transformPart = transformAttributes.split("\\,");
+			String transform = transformPart[0];
+			String literal = transformPart[1];
+			String[] parts = output.split("\\,");
+			for (String part : parts) {
+				try {
+					int charIndex = part.indexOf(literal);
+					String part1 = part.substring(0, charIndex + 1);
+					String part11 = part.substring(0, charIndex);
+					String replacement = "";
+					switch (transform) {
+					case "ADD_INDEX_AFTER":
+						replacement = part11 + literal + count;
+						if (!output.contains(replacement)) {
+							output = StringUtils.replace(output, part1, replacement);
+						}
+						break;
+					case "ADD_INDEX_BEFORE":
+						replacement = part11 + count + literal;
+						output = StringUtils.replace(output, part1, replacement);
+						break;
+					case "ADD_INDEX_START":
+						replacement = count + part;
+						output = StringUtils.replace(output, part, replacement);
+						break;
+					case "INDEX_BETWEEN":
+						String between = "";
+						replacement = count + "";
+						// System.out.println("transformAttributes " + transformAttributes.part);
+						if (transformPart.length == 3) {
+							between = StringUtils.substringBetween(part, transformPart[1], transformPart[2]);
+							output = StringUtils.replace(output, between, replacement);
+						} else if (transformPart.length == 2) {
+							between = StringUtils.substringBetween(part, literal, literal);
+							output = StringUtils.replace(output, between, replacement);
+						}
+
+						break;
+					default:
+						break;
+					}
+				} catch (Exception e) {
+
+				}
+			}
+		}
+		return output;
 	}
 
 	/**
@@ -127,7 +255,13 @@ public class DemoApp {
 	 * @return
 	 */
 	private static String extractXpath(String xmlInput, String path) {
+		try {
+			XPath xPath = XPathFactory.newInstance().newXPath();
+			XPathExpression query = xPath.compile(path);
+			return query.evaluate(new InputSource(new StringReader(xmlInput)));
+		} catch (Exception e) {
 
+		}
 		return "";
 	}
 
@@ -168,7 +302,7 @@ public class DemoApp {
 		case "MAP_LIST":
 			Document document = getXMLDocument(callerRequest);
 
-			Element root = document.getDocumentElement();
+			// Element root = document.getDocumentElement();
 			// System.out.println("root: " + root.getNodeName());
 			// get list
 			NodeList nList = document.getElementsByTagName(targetTag);
@@ -207,16 +341,6 @@ public class DemoApp {
 		return out;
 	}
 
-	/**
-	 * 
-	 * @param itemName
-	 * @return
-	 */
-	private static String extractItem(String itemName) {
-
-		return "";
-	}
-
 	static String callerRequest = "<request>\n" + "    <header>\n" + "        <systemCode>100</systemCode>\n"
 			+ "        <timestamp>time_here</timestamp>\n" + "        <service>001</service>\n" + "    </header>\n"
 			+ "    <body>\n" + "        <reference>unique_id</reference>\n"
@@ -241,10 +365,12 @@ public class DemoApp {
 
 	static String strTemplate = "REQUEST:REF=${reference},NAME=${customerName},MOBILE=${customerMobile},ACCOUNTS=*${childTemplate}";
 
-	static String childTemplate = "account=^=account[ACCOUNT_NO=${id},ACCOUNT_TITLE=${name},ACCOUNT_MOBILE=${mobile},ACCOUNT_EMAIL=${email},ACCOUNT_BALANCE=${balance}]";
-
+	static String childTemplate = "account=^=account[ACCOUNT_NO:=${id},ACCOUNT_TITLE:=${name},ACCOUNT_MOBILE:=${mobile},ACCOUNT_EMAIL:=${email},ACCOUNT_BALANCE:=${balance}]";
+	static String childTemplate2 = "account=XML=account[<acountNo>${id}</acountNo><accountTitle>${name}</accountTitle><accountMobile>${mobile}</accountMobile><accountEmail>${email}</accountEmail><accountBalance>${balance}</accountBalance>]";
+	static String childTemplate3 = "account=JSON=account[{\"response\":{\"acountNo\":\"${id}\",\"accountTitle\":\"${name},\",\"accountMobile\":\"${mobile}\",\"accountEmail\":\"${email}\",\"accountBalance\":\"${balance}\"}}]";
 	static String finalResponseTemplate = "{\n" + "	\"statusCode\": \"${responseCode}\",\n"
 			+ "	\"statusDesc\": \"${ResponseDesc}\",\n" + "	\"response\": [{\n"
 			+ "			\"ResponseString\": \"${template}\",\n" + "			\"status\": \"${ResponseDesc}\"\n"
 			+ "		}\n" + "\n" + "	]\n" + "}\n";
 }
+

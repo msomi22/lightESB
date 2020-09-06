@@ -1,0 +1,250 @@
+/**
+ * 
+ */
+package demo;
+
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.util.*;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.text.StringSubstitutor;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+/**
+ * 
+ *
+ */
+public class DemoApp {
+
+	/**
+	 * 
+	 */
+	public DemoApp() {
+
+	}
+
+	/**
+	 * @param args
+	 */
+	public static void main(String[] args) {
+
+		System.out.println(transformXML().toString());
+
+	}
+
+	public static Object transformXML() {
+
+		String filtered = "";
+		if (strTemplate.contains("*")) {
+			String outType = "MAP_LIST";
+			String[] targetTags = { "id", "name", "mobile", "email", "balance" };
+			strTemplate = StringUtils.replace(strTemplate, "*", ""); 
+			filtered = getChildRecord(callerRequest, childTemplate, outType, targetTags);
+		}
+
+		Map<String, String> map = new HashMap<>();
+		map.put("childTemplate", filtered);
+		extractXpath(callerRequest, "//");
+
+		String output = replaceTemplate(strTemplate, map);
+
+		return output;
+	}
+
+	/**
+	 * 
+	 * @param callerRequest
+	 * @param childTemplate
+	 * @param outType
+	 * @param targetTags
+	 * @return
+	 */
+	private static String getChildRecord(String callerRequest, String childTemplate, String outType,
+			String[] targetTags) {
+		String targetTag = StringUtils.substringBetween(childTemplate, "=", "[");
+		targetTag = StringUtils.substringAfter(targetTag, "=");
+		Object outputMap = extractList(callerRequest, targetTag, targetTags, outType);
+		String filtered = mapListFilter(outputMap, targetTags, childTemplate);
+		return filtered;
+	}
+
+	/**
+	 * 
+	 * @param outputMap
+	 * @param targetTags
+	 * @param template
+	 * @return
+	 */
+	private static String mapListFilter(Object outputMap, String[] targetTags, String template) {
+		String delim = "";
+		delim = StringUtils.substringBetween(template, "=", "=");
+		template = StringUtils.substringBetween(template, "[", "]");
+
+		String records = "";
+		if (outputMap instanceof List) {
+			List<Map> mapList = (List<Map>) outputMap;
+			for (Map map : mapList) {
+				String record = "";
+				for (int i = 0; i < targetTags.length; i++) {
+					String tag = targetTags[i];
+					String value = map.getOrDefault(tag, "").toString();
+					record = replaceTemplate(template, map);
+
+				}
+				records += delim + "" + record;
+			}
+		}
+		if (records.startsWith(delim)) {
+			records = StringUtils.stripStart(records, delim);
+		}
+		return records;
+	}
+
+	/**
+	 * 
+	 * @param template
+	 * @param map
+	 * @return
+	 */
+	private static String replaceTemplate(String template, Map map) {
+		String record;
+		StringSubstitutor sub = new StringSubstitutor(map);
+		record = sub.replace(template);
+		return record;
+	}
+
+	/**
+	 * 
+	 * @param xmlInput
+	 * @param path
+	 * @return
+	 */
+	private static String extractXpath(String xmlInput, String path) {
+
+		return "";
+	}
+
+	/**
+	 * 
+	 * @param inputXML
+	 * @return
+	 */
+	private static Document getXMLDocument(String inputXML) {
+		Document document = null;
+		try {
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			DocumentBuilder builder = factory.newDocumentBuilder();
+
+			InputStream is = new ByteArrayInputStream(inputXML.getBytes());
+
+			document = builder.parse(is);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		document.getDocumentElement().normalize();
+		return document;
+	}
+
+	/**
+	 * 
+	 * @param targetTags
+	 * @param listName
+	 * @param listItem
+	 * @param outputObject
+	 * @param inputsTags
+	 * @return
+	 */
+	private static Object extractList(String callerRequest, String targetTag, String[] targetTags, String outType) {
+		Object out = new Object();
+		switch (outType) {
+
+		case "MAP_LIST":
+			Document document = getXMLDocument(callerRequest);
+
+			Element root = document.getDocumentElement();
+			// System.out.println("root: " + root.getNodeName());
+			// get list
+			NodeList nList = document.getElementsByTagName(targetTag);
+			// System.out.println("targetTag: " + targetTag);
+
+			List<Map> mapList = new ArrayList<Map>();
+			for (int temp = 0; temp < nList.getLength(); temp++) {
+				Node node = nList.item(temp);
+				if (node.getNodeType() == Node.ELEMENT_NODE) {
+					Element eElement = (Element) node;
+					String value = "";
+					Map<String, String> map = new HashMap<>();
+					for (String tagName : targetTags) {
+						if (eElement.getElementsByTagName(tagName) != null) {
+							value = eElement.getElementsByTagName(tagName).item(0).getTextContent();
+							map.put(tagName, value);
+						} else {
+							System.err.println("Tag  " + tagName + " not found");
+						}
+
+					}
+					mapList.add(map);
+					// System.out.println(eElement.getAttribute("id"));
+					// System.out.println(eElement.getElementsByTagName("firstName").item(0).getTextContent());
+				}
+			}
+
+			out = mapList;
+			break;
+
+		default:
+			break;
+
+		}
+
+		return out;
+	}
+
+	/**
+	 * 
+	 * @param itemName
+	 * @return
+	 */
+	private static String extractItem(String itemName) {
+
+		return "";
+	}
+
+	static String callerRequest = "<request>\n" + "    <header>\n" + "        <systemCode>100</systemCode>\n"
+			+ "        <timestamp>time_here</timestamp>\n" + "        <service>001</service>\n" + "    </header>\n"
+			+ "    <body>\n" + "        <reference>unique_id</reference>\n"
+			+ "        <customerName>Peter Mwenda</customerName>\n"
+			+ "        <customerMobile>0718953974</customerMobile>\n" + "        <accounts>\n"
+			+ "            <account>\n" + "                <id>1</id>\n" + "                <name>peter</name>\n"
+			+ "                <mobile>0718953974</mobile>\n"
+			+ "                <email>mwendapeter72@gmail.com</email>\n" + "                <balance>100</balance>\n"
+			+ "            </account>\n" + "             <account>\n" + "                <id>2</id>\n"
+			+ "                <name>peter</name>\n" + "                <mobile>0718953974</mobile>\n"
+			+ "                <email>mwendapeter72@gmail.com</email>\n" + "                <balance>100</balance>\n"
+			+ "            </account>\n" + "             <account>\n" + "                <id>3</id>\n"
+			+ "                <name>peter</name>\n" + "                <mobile>0718953974</mobile>\n"
+			+ "                <email>mwendapeter72@gmail.com</email>\n" + "                <balance>100</balance>\n"
+			+ "            </account>\n" + "        </accounts>\n" + "    </body>\n" + "</request>";
+
+	static String ackTemplate = "<response>\n" + "    <header>\n" + "        <systemCode>${systemCode}</systemCode>\n"
+			+ "        <timestamp>${currentTime}</timestamp>\n" + "        <service>${service}</service>\n"
+			+ "    </header>\n" + "    <body>\n" + "        <reference>${reference}</reference>\n"
+			+ "        <satus>${responseCode}</satus>\n" + "        <statusDesc>${ResponseDesc}</statusDesc>\n"
+			+ "    </body>\n" + "</response>";
+
+	static String strTemplate = "REQUEST:REF=${reference},NAME=${customerName},MOBILE=${customerMobile},ACCOUNTS=*${childTemplate}";
+
+	static String childTemplate = "account=^=account[ACCOUNT_NO=${id},ACCOUNT_TITLE=${name},ACCOUNT_MOBILE=${mobile},ACCOUNT_EMAIL=${email},ACCOUNT_BALANCE=${balance}]";
+
+	static String finalResponseTemplate = "{\n" + "	\"statusCode\": \"${responseCode}\",\n"
+			+ "	\"statusDesc\": \"${ResponseDesc}\",\n" + "	\"response\": [{\n"
+			+ "			\"ResponseString\": \"${template}\",\n" + "			\"status\": \"${ResponseDesc}\"\n"
+			+ "		}\n" + "\n" + "	]\n" + "}\n";
+}

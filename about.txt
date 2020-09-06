@@ -18,31 +18,34 @@ All the inputs are mandatory, some will have legth check, reasonability check an
 
 Once the business logic is satisfied, the message will be droped in ActiveMQ "RequestQueue"
 
-The second layer, which we will name as technical will do the actual business logis.
+The second layer, which we will name as technical will do the actual business logic.
 
 This can be, 
 
-0. Configure a service, sya sync or async, for async you should provide a callback endpoint and configure a callback response template
-1. Transformation as configured
-2. Enrichment etc
-3. Interacting with provider or just doing some transormation , say, transform the request into somegthing else like, given a json, give me a SOAP as per the specs configured in db
-4. Calling another endpoint, the provider
+0. Configure a service, say sync or async, for async you should provide a callback endpoint and configure a callback response template.
+1. Transformation as configured.
+2. Enrichment etc.
+3. Interacting with provider or just doing some transformation , say, transform the request into somegthing else like; given a json, give me a SOAP as per the specs configured in db.
+4. Calling another endpoint, the provider.
 5. Querying a database - at service level this and above 3 will be configured. For instance we will specify db type, say Postgres, connection string, poll size etc.
-6. Send request to the provider, get response, trasform to the desired output
-7. Send back to the caller.
+6. Send request to the provider, get response, trasform to the desired output.
+7. Technical to drop the response in "ResponseQueue"
+8. Business to pick and send back to the caller.
 
 This ESB will be driven by congigurable templates, infact, every part will be configurable.
 
 
-When there is a need for integration, no kind of development will be required.
+When there is a need for integration, no form of development will be required.
 
-That said, the design of the application must be smart so that in future we don't have to find a need for code change due to some unforeseen requirements, redis for isntance.
+That said, the design of the application must be smart so that in future we don't have to find a need for code change, mostly due to some unforeseen requirements.
 
-So, our slogan is.
+The ESB will depond much on redis mem db for configurations.
+
+That said and done, our slogan is.
 
 Design, Design, Code
 
-Food for thought.
+Sample Requirement.
 
 1. I want to configure a REST XML service,async, that will receive the below XML, "with dynamic ojects and lists"
 2. Since the service is async, we will send an ack 

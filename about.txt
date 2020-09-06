@@ -12,7 +12,7 @@ The business logical part will do validation, authentication and authorization. 
 
 For example, 
 
-Our above service will have basic authentication
+Our above service will have a basic authentication mechanism.
 
 All the inputs are mandatory, some will have legth check, reasonability check and range check.
 

@@ -1,4 +1,4 @@
-The purpose of this project is to provide a very light weght ESB application. The ESB will support SOAP,XML,JSON over HTTP(s), TCP or Socket, JDBC and SFTP. 
+The purpose of this project is to design and develop a light weight ESB application. The ESB will support SOAP,XML,JSON over HTTP(s), TCP or Socket, JDBC and SFTP. 
 
 The application will be fully configurable when a new service is required.
 

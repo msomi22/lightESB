@@ -115,6 +115,20 @@ accountT ==> accounts:account=account[ACCOUNT_NO={id},ACCOUNT_TITLE={name},ACCOU
   
   
 {
+	"statusCode": "[responseCode]",
+	"statusDesc": "[ResponseDesc]",
+	"response": [{
+			"ResponseString": "[template]",
+			"status": "[ResponseDesc]"
+		}
+
+	]
+}
+
+
+5. *Final response*
+
+{
 	"statusCode": "01",
 	"statusDesc": "success",
 	"response": [{
@@ -124,6 +138,8 @@ accountT ==> accounts:account=account[ACCOUNT_NO={id},ACCOUNT_TITLE={name},ACCOU
 
 	]
 }
+
+
   
   
   

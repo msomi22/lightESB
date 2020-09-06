@@ -1,0 +1,52 @@
+The purpose of this project is to provide a very light weght ESB application. the ESB will support SOAP,XML,JSON over HTTP(s), TCP or Socket, JDBC and SFTP. 
+
+The application will be fully configurable when a new service is required.
+
+Say for instance, 
+
+We need to expose a REST/XML service, this services will receive a custome payload, with objects and lists, all configurable.
+
+Our ESB will be strucuted into two logical parts.
+
+The business logical part will do validation, authentication and authorization. In the database one will configure the three.
+
+Foe example, 
+
+Our above service will have basic authentication
+
+All the inputs are mandatory, some will have legth check, reasonability check and range check.
+
+Once the business logic is satisfied, the message will be droped in ActiveMQ "RequestQueue"
+
+The second layer, which we will name as technical will do the actual business logis.
+
+This can be, 
+
+0. configure a service, can be sync or async, for async you should provide callback endpoint and congigure then callback template
+1. transformation as configured
+2. enrichment etc
+3. interacting with provider or just doing some transormation , say, transform the request into somegthing else like, given a json, give me a SOAP as per the specs configured in db
+4. calling another endpoint, the provider
+5. querying a database - at service level this and above 3 will be configured. For instance we will specify db type, say Postgres, connection string, poll size etc.
+6. send request to the provider, get response, trasform to the desired output
+7. send back to the caller.
+
+This ESB will be driven by congigurable templates, infact, every part will be configurable.
+
+
+When there is a need for integration, no kind of development will be required.
+
+That said, the design of the application must be smart so that in future we don't have to find a need for code change due to some unforeseen requirements.
+
+So, our slogan is.
+
+Design, Design, Code
+
+Food for thought.
+
+1. I want to configure a REST XML service,async, that will receive the below XML, "with dynamic ojects and lists"
+2. Since the service is async, we will send an ack 
+3. Transform the request into a delimited string as per a configure template.
+4. respond back via the callback with a JSON object conating the delimited sring. the JSSOn response will be as per a cgigured template.
+  
+

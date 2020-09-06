@@ -1,3 +1,5 @@
 1. develope the devops way
 2. db design
 3. code
+
+

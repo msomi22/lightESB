@@ -4,7 +4,7 @@ The application will be fully configurable when a new service is required.
 
 Say for instance, 
 
-We need to expose a REST/XML service, this services will receive a custome payload, with objects and lists, all configurable.
+We need to expose a REST/XML service, this service will receive a custom payload, with objects and lists, all configurable.
 
 Our ESB will be structured into two logical parts, business and technical.
 

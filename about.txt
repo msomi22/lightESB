@@ -43,13 +43,21 @@ The ESB will depend much on redis mem db for configurations.
 
 That said and done, our slogan is.
 
-Design, Design, Code
+Design, Design, Code.
 
 Sample Requirement.
 
-1. I want to configure a REST XML service,async, that will receive the below XML, "with dynamic ojects and lists"
-2. Since the service is async, we will send an ack 
-3. Transform the request into a delimited string as per a configure template.
-4. respond back via the callback with a JSON object conating the delimited sring. the JSSOn response will be as per a cgigured template.
+1. I want to configure an async REST/XML service, that will receive the below XML, "with dynamic ojects and lists".
+2. Since the service is async, we will send an ack after basic validation and conitue with our backed logic.
+3. Transform the request into a delimited string as per the configured template.
+4. Sespond back via the callback with a JSON object contating the delimited string. A final JSON response template will be configured.
+
+1. *Caller request*
+
+2. *Acknowledgement template*
+
+3. *Delimited template*
+
+4. *Final response template*
   
 

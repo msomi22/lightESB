@@ -92,6 +92,24 @@ Sample Requirement.
 
 2. *Acknowledgement template*
 
+
+<response>
+    <header>
+        <systemCode>{systemCode}</systemCode>
+        <timestamp>{currentTime}</timestamp>
+        <service>001</service>
+    </header>
+    <body>
+        <reference>{reference}</reference>
+        <satus>{responseCode}</satus>
+        <statusDesc>{ResponseDesc}</statusDesc>
+    </body>
+</response>
+
+
+3. *Acknowledgement Response*
+
+
 <response>
     <header>
         <systemCode>100</systemCode>
@@ -105,10 +123,13 @@ Sample Requirement.
     </body>
 </response>
 
+
 3. *Delimited template*
+
 
 template ==> REQUEST:REF={reference},NAME={customerName},MOBILE={customerMobile},ACCOUNTS=*{accountT}
 accountT ==> accounts:account=account[ACCOUNT_NO={id},ACCOUNT_TITLE={name},ACCOUNT_MOBILE={mobile},ACCOUNT_EMAIL={email},ACCOUNT_BALANCE={balance}]
+
 
 4. *Final response template*
   
@@ -127,6 +148,7 @@ accountT ==> accounts:account=account[ACCOUNT_NO={id},ACCOUNT_TITLE={name},ACCOU
 
 
 5. *Final response*
+
 
 {
 	"statusCode": "01",

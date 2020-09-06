@@ -25,8 +25,7 @@ import org.xml.sax.InputSource;
  */
 public class DemoApp {
 
-	static String transformAttributes = "";
-	// ADD_INDEX_AFTER,ADD_INDEX_BEFORE,ADD_INDEX_START,INDEX_BETWEEN
+	static String transformationData1 = "UCASE,0";
 
 	/**
 	 * 
@@ -51,9 +50,10 @@ public class DemoApp {
 		String output = "STR";
 		String outType = "MAP_LIST";
 		String[] targetTags = { "id", "name", "mobile", "email", "balance" };
+		String transformAttributes = "";// ADD_INDEX_AFTER,ADD_INDEX_BEFORE,ADD_INDEX_START,INDEX_BETWEEN
 
 		Object out = transformXML(output, callerRequest, strTemplate, childTemplate3, outType, targetTags,
-				transformationMap);
+				transformationMap, transformAttributes);
 		System.out.println(out.toString());
 
 	}
@@ -70,13 +70,14 @@ public class DemoApp {
 	 * @return
 	 */
 	public static Object transformXML(String outMessage, String callerRequest, String strTemplate, String childTemplate,
-			String outType, String[] targetTags, Map<String, String> transformationMap) {
+			String outType, String[] targetTags, Map<String, String> transformationMap, String transformAttributes) {
 
 		Object outputMessage = "";
 		switch (outMessage) {
 		case "STR":
 
-			outputMessage = toSTR(callerRequest, strTemplate, childTemplate, outType, targetTags, transformationMap);
+			outputMessage = toSTR(callerRequest, strTemplate, childTemplate, outType, targetTags, transformationMap,
+					transformAttributes);
 			break;
 
 		default:
@@ -97,13 +98,16 @@ public class DemoApp {
 	 * @return
 	 */
 	private static Object toSTR(String callerRequest, String strTemplate, String childTemplate, String outType,
-			String[] targetTags, Map<String, String> transformationMap) {
+			String[] targetTags, Map<String, String> transformationMap, String transformAttributes) {
 		String filtered = "";
 		if (strTemplate.contains("*")) {
 			strTemplate = StringUtils.replace(strTemplate, "*", "");
-			filtered = getChildRecord(callerRequest, childTemplate, outType, targetTags);
+			filtered = getChildRecord(callerRequest, childTemplate, outType, targetTags, transformAttributes);
 		}
 		transformationMap.put("childTemplate", filtered);
+		// TODO
+		String transformationData = transformationData1;
+		transformationMap = transformFields(transformationMap, "0", transformationData);// 0 = main template
 		String output = replaceTemplate(strTemplate, transformationMap);
 
 		return output;
@@ -118,12 +122,12 @@ public class DemoApp {
 	 * @return
 	 */
 	private static String getChildRecord(String callerRequest, String childTemplate, String outType,
-			String[] targetTags) {
+			String[] targetTags, String transformAttributes) {
 		String targetTag = StringUtils.substringBetween(childTemplate, "=", "[");
 		targetTag = StringUtils.substringAfter(targetTag, "=");
 		String wrapper = StringUtils.substringBefore(childTemplate, "=");
 		Object outputMap = extractList(callerRequest, targetTag, targetTags, outType);
-		String filtered = mapListFilter(outputMap, targetTags, childTemplate, wrapper);
+		String filtered = mapListFilter(outputMap, targetTags, childTemplate, wrapper, transformAttributes);
 		return filtered;
 	}
 
@@ -134,19 +138,23 @@ public class DemoApp {
 	 * @param template
 	 * @return
 	 */
-	private static String mapListFilter(Object outputMap, String[] targetTags, String template, String wrapper) {
+	private static String mapListFilter(Object outputMap, String[] targetTags, String template, String wrapper,
+			String transformAttributes) {
 		String delim = "";
 		delim = StringUtils.substringBetween(template, "=", "=");
 		template = StringUtils.substringBetween(template, "[", "]");
-		// wrapper = "accountObj";
 		String records = "";
 
 		if (outputMap instanceof List) {
-			List<Map> mapList = (List<Map>) outputMap;
+			@SuppressWarnings("unchecked")
+			List<Map<String, String>> mapList = (List<Map<String, String>>) outputMap;
 			int count = 1;
-			for (Map<?, ?> map : mapList) {
+			for (Map<String, String> map : mapList) {
 				String record = "";
 				for (int i = 0; i < targetTags.length; i++) {
+					// TODO
+					String transformationData = transformationData1;
+					map = transformFields(map, "1", transformationData);// secondary map, child
 					record = replaceTemplate(template, map);
 				}
 
@@ -173,7 +181,7 @@ public class DemoApp {
 			}
 		}
 		if (delim.equals("JSON")) {
-			records = "{\""+wrapper+"\":[" + records + "]}";
+			records = "{\"" + wrapper + "\":[" + records + "]}";
 		}
 		if (records.startsWith(delim)) {
 			records = StringUtils.stripStart(records, delim);
@@ -190,11 +198,99 @@ public class DemoApp {
 	 * @param index
 	 * @return
 	 */
-	private static String replaceTemplate(String template, Map map) {
+	private static String replaceTemplate(String template, Map<String, String> map) {
 		String record = "";
+		// map = transformFields(map);
 		StringSubstitutor sub = new StringSubstitutor(map);
 		record = sub.replace(template);
 		return record;
+	}
+
+	/**
+	 * TODO
+	 * 
+	 * @param map
+	 * @return
+	 */
+	private static Map<String, String> transformFields(Map<String, String> map, String sourceMap,
+			String transformationData) {
+		Map<String, String> transformed = new HashMap<>();
+		// Map<String, Object> inPutData = new HashMap<>();
+		map.entrySet().stream().forEach(e -> {
+			//System.out.println("key: " + e.getKey() + " value: " + e.getValue() + " sourceMap: " + sourceMap);
+			String valueString = transformField(e.getValue(), map, transformationData);
+			//System.out.println("valueString: " + valueString + " " + transformationData);
+			transformed.put(e.getKey(), valueString);
+		});
+		return transformed;
+	}
+
+	/**
+	 * 
+	 * @param value
+	 * @param inPutData
+	 * @return
+	 */
+	private static String transformField(String value, Map<String, String> inPutData, String transformationData) {
+
+		if (!transformationData.isEmpty()) {
+			if (transformationData.contains(",")) {
+				String[] parts = transformationData.split("\\,");
+				String stripChars = "";
+				switch (parts[0]) {
+				case "JOIN":
+					String joinWith = "";
+					String joinChar = "";
+					try {
+						joinWith = parts[1];
+						joinChar = parts[2];
+						joinWith = inPutData.getOrDefault(joinWith, "");
+					} catch (Exception e) {
+
+					}
+					value = value + joinChar + joinWith;
+					break;
+				case "STRIPSTART":
+					try {
+						stripChars = parts[1];
+					} catch (Exception e) {
+
+					}
+					value = StringUtils.stripStart(value, stripChars);
+					break;
+				case "STRIPEND":
+					try {
+						stripChars = parts[1];
+					} catch (Exception e) {
+
+					}
+					value = StringUtils.stripEnd(value, stripChars);
+					break;
+				case "UCASE":
+					value = value.toUpperCase();
+					break;
+				case "LCASE":
+					value = value.toLowerCase();
+					break;
+				case "DATE_FORMART":
+					break;
+				case "CONST":
+					String constant = "";
+					try {
+						constant = parts[1];
+					} catch (Exception e) {
+
+					}
+					value = constant;
+					break;
+				default:
+					break;
+
+				}
+			}
+		}
+
+		return value;
 	}
 
 	private static String transformOutput(int count, String output, String transformAttributes) {
@@ -308,7 +404,7 @@ public class DemoApp {
 			NodeList nList = document.getElementsByTagName(targetTag);
 			// System.out.println("targetTag: " + targetTag);
 
-			List<Map> mapList = new ArrayList<Map>();
+			List<Map<String, String>> mapList = new ArrayList<Map<String, String>>();
 			for (int temp = 0; temp < nList.getLength(); temp++) {
 				Node node = nList.item(temp);
 				if (node.getNodeType() == Node.ELEMENT_NODE) {
@@ -373,4 +469,3 @@ public class DemoApp {
 			+ "			\"ResponseString\": \"${template}\",\n" + "			\"status\": \"${ResponseDesc}\"\n"
 			+ "		}\n" + "\n" + "	]\n" + "}\n";
 }
-

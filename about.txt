@@ -22,14 +22,14 @@ The second layer, which we will name as technical will do the actual business lo
 
 This can be, 
 
-0. configure a service, can be sync or async, for async you should provide callback endpoint and congigure then callback template
-1. transformation as configured
-2. enrichment etc
-3. interacting with provider or just doing some transormation , say, transform the request into somegthing else like, given a json, give me a SOAP as per the specs configured in db
-4. calling another endpoint, the provider
-5. querying a database - at service level this and above 3 will be configured. For instance we will specify db type, say Postgres, connection string, poll size etc.
-6. send request to the provider, get response, trasform to the desired output
-7. send back to the caller.
+0. Configure a service, sya sync or async, for async you should provide a callback endpoint and configure a callback response template
+1. Transformation as configured
+2. Enrichment etc
+3. Interacting with provider or just doing some transormation , say, transform the request into somegthing else like, given a json, give me a SOAP as per the specs configured in db
+4. Calling another endpoint, the provider
+5. Querying a database - at service level this and above 3 will be configured. For instance we will specify db type, say Postgres, connection string, poll size etc.
+6. Send request to the provider, get response, trasform to the desired output
+7. Send back to the caller.
 
 This ESB will be driven by congigurable templates, infact, every part will be configurable.
 

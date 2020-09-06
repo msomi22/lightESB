@@ -10,7 +10,7 @@ Our ESB will be structured into two logical parts, business and technical.
 
 The business logical part will do validation, authentication and authorization. In the database one will configure the three.
 
-Foe example, 
+For example, 
 
 Our above service will have basic authentication
 

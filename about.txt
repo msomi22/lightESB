@@ -14,9 +14,9 @@ For example,
 
 Our above service will have a basic authentication mechanism.
 
-All the inputs are mandatory, some will have legth check, reasonability check and range check.
+Let say all the inputs in this service are mandatory, some will have length check, reasonability check and range check.
 
-Once the business logic is satisfied, the message will be droped in ActiveMQ "RequestQueue"
+Once the business logic is satisfied, the message will be dropped in ActiveMQ "RequestQueue"
 
 The second layer, which we will name as technical will do the actual business logic.
 

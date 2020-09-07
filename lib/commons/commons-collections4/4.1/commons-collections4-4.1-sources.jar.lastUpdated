@@ -1,0 +1,6 @@
+#NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
+#Mon Aug 24 12:51:58 EAT 2020
+@default-spring-libs-release-https\://repo.spring.io/libs-release/.lastUpdated=1598262718154
+https\://repo.spring.io/libs-release/.error=Could not transfer artifact org.apache.commons\:commons-collections4\:jar\:sources\:4.1 from/to spring-libs-release (https\://repo.spring.io/libs-release)\: repo.spring.io
+@default-central-https\://repo.maven.apache.org/maven2/.lastUpdated=1598262718156
+https\://repo.maven.apache.org/maven2/.error=Could not transfer artifact org.apache.commons\:commons-collections4\:jar\:sources\:4.1 from/to central (https\://repo.maven.apache.org/maven2)\: repo.maven.apache.org

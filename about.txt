@@ -1,52 +1,180 @@
-The purpose of this project is to provide a very light weght ESB application. the ESB will support SOAP,XML,JSON over HTTP(s), TCP or Socket, JDBC and SFTP. 
+The purpose of this project is to design and develop a light weight ESB application. The ESB will support SOAP,XML,JSON over HTTP(s), TCP or Socket, JDBC and SFTP. 
 
 The application will be fully configurable when a new service is required.
 
 Say for instance, 
 
-We need to expose a REST/XML service, this services will receive a custome payload, with objects and lists, all configurable.
+We need to expose a REST/XML service, this service will receive a custom payload, with objects and lists, all configurable.
 
-Our ESB will be strucuted into two logical parts.
+Our ESB will be structured into two logical parts, business and technical.
 
-The business logical part will do validation, authentication and authorization. In the database one will configure the three.
+The business logical part will do validation, authentication and authorization. The three will be configured in the database.
 
-Foe example, 
+For example, 
 
-Our above service will have basic authentication
+Our above service will have a basic authentication mechanism.
 
-All the inputs are mandatory, some will have legth check, reasonability check and range check.
+Let say all the inputs in this service are mandatory, some will have length check, reasonability check and range check.
 
-Once the business logic is satisfied, the message will be droped in ActiveMQ "RequestQueue"
+Once the business logic is satisfied, the message will be dropped in ActiveMQ "RequestQueue"
 
-The second layer, which we will name as technical will do the actual business logis.
+The second layer, which we will name as technical will do the actual business logic.
 
 This can be, 
 
-0. configure a service, can be sync or async, for async you should provide callback endpoint and congigure then callback template
-1. transformation as configured
-2. enrichment etc
-3. interacting with provider or just doing some transormation , say, transform the request into somegthing else like, given a json, give me a SOAP as per the specs configured in db
-4. calling another endpoint, the provider
-5. querying a database - at service level this and above 3 will be configured. For instance we will specify db type, say Postgres, connection string, poll size etc.
-6. send request to the provider, get response, trasform to the desired output
-7. send back to the caller.
+0. Configure a service, say sync or async, for async you should provide a callback endpoint and configure a callback response template.
+1. Transformation as configured.
+2. Enrichment etc.
+3. Interacting with provider or just doing some transformation , say, transform the request into somegthing else like; given a json, give me a SOAP as per the specs configured in db.
+4. Calling another endpoint, the provider.
+5. Querying a database - at service level this and above 3 will be configured. For instance we will specify db type, say Postgres, connection string, poll size etc.
+6. Send request to the provider, get response, trasform to the desired output.
+7. Technical to drop the response in "ResponseQueue"
+8. Business to pick and send back to the caller.
 
 This ESB will be driven by congigurable templates, infact, every part will be configurable.
 
 
-When there is a need for integration, no kind of development will be required.
+When there is a need for integration, no form of development will be required.
 
-That said, the design of the application must be smart so that in future we don't have to find a need for code change due to some unforeseen requirements.
+That said, the design of the application must be smart so that in future, there will be no need to change the code, mostly due to some unforeseen requirements.
 
-So, our slogan is.
+The ESB will depend much on redis mem db for configurations.
 
-Design, Design, Code
+That said and done, our slogan is.
 
-Food for thought.
+Design, Design, Code.
 
-1. I want to configure a REST XML service,async, that will receive the below XML, "with dynamic ojects and lists"
-2. Since the service is async, we will send an ack 
-3. Transform the request into a delimited string as per a configure template.
-4. respond back via the callback with a JSON object conating the delimited sring. the JSSOn response will be as per a cgigured template.
+Sample Requirement.
+
+1. I want to configure an async REST/XML service, that will receive the below XML, "with dynamic ojects and lists".
+2. Since the service is async, we will send an acknowledgment after basic validation and continue with our backed business logic.
+3. Transform the request into a delimited string as per the configured template.
+4. Respond back via the callback with a JSON object contating the delimited string. A final JSON response template will be configured.
+
+1. *Caller request*
+
+<request>
+    <header>
+        <systemCode>100</systemCode>
+        <timestamp>time_here</timestamp>
+        <service>001</service>
+    </header>
+    <body>
+        <reference>unique_id</reference>
+        <customerName>Peter Mwenda</customerName>
+        <customerMobile>0718953974</customerMobile>
+        <accounts>
+            <account>
+                <id>1</id>
+                <name>peter</name>
+                <mobile>0718953974</mobile>
+                <email>mwendapeter72@gmail.com</email>
+                <balance>100</balance>
+            </account>
+             <account>
+                <id>2</id>
+                <name>peter</name>
+                <mobile>0718953974</mobile>
+                <email>mwendapeter72@gmail.com</email>
+                <balance>100</balance>
+            </account>
+             <account>
+                <id>3</id>
+                <name>peter</name>
+                <mobile>0718953974</mobile>
+                <email>mwendapeter72@gmail.com</email>
+                <balance>100</balance>
+            </account>
+        </accounts>
+    </body>
+</request>
+
+2. *Acknowledgement template*
+
+
+<response>
+    <header>
+        <systemCode>${systemCode}</systemCode>
+        <timestamp>${currentTime}</timestamp>
+        <service>${service}</service>
+    </header>
+    <body>
+        <reference>${reference}</reference>
+        <satus>${responseCode}</satus>
+        <statusDesc>${ResponseDesc}</statusDesc>
+    </body>
+</response>
+
+
+3. *Acknowledgement Response*
+
+
+<response>
+    <header>
+        <systemCode>100</systemCode>
+        <timestamp>time_here</timestamp>
+        <service>001</service>
+    </header>
+    <body>
+        <reference>unique_id</reference>
+        <satus>01</satus>
+        <statusDesc>sucess</statusDesc>
+    </body>
+</response>
+
+
+4. *Delimited template*
+
+
+template ==> REQUEST:REF=${reference},NAME=${customerName},MOBILE=${customerMobile},ACCOUNTS=*${childTemplate}
+childTemplate ==> account=^=account[ACCOUNT_NO=${id},ACCOUNT_TITLE=${name},ACCOUNT_MOBILE=${mobile},ACCOUNT_EMAIL=${email},ACCOUNT_BALANCE=${balance}]
+
+
+5. *Final response template*
   
+  
+  
+{
+	"statusCode": "${responseCode}",
+	"statusDesc": "${ResponseDesc}",
+	"response": [{
+			"ResponseString": "${template}",
+			"status": "${ResponseDesc}"
+		}
+
+	]
+}
+
+
+6. *Final response*
+
+
+{
+	"statusCode": "01",
+	"statusDesc": "success",
+	"response": [{
+			"ResponseString": "REQUEST:REF=unique_id,NAME=Peter Mwenda,MOBILE=0718953974,ACCOUNTS=account=ACCOUNT_NO=1,ACCOUNT_TITLE=peter,ACCOUNT_MOBILE=0718953974,ACCOUNT_EMAIL=mwendapeter72@gmail.com,ACCOUNT_BALANCE=100^account=ACCOUNT_NO=2,ACCOUNT_TITLE=peter,ACCOUNT_MOBILE=0718953974,ACCOUNT_EMAIL=mwendapeter72@gmail.com,ACCOUNT_BALANCE=100^account=ACCOUNT_NO=3,ACCOUNT_TITLE=peter,ACCOUNT_MOBILE=0718953974,ACCOUNT_EMAIL=mwendapeter72@gmail.com,ACCOUNT_BALANCE=100",
+			"status": "sucess"
+		}
+
+	]
+}
+
+
+  
+  
+  
+  
+  
+
+XML lint tool
+
+https://www.webtoolkitonline.com/xml-formatter.html
+
+JSON lint tool
+
+https://jsonlint.com
+
+
 
